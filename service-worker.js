@@ -1,17 +1,202 @@
-// service-worker.js
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Damon Games Schedule</title>
 
-self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.open('calendar-cache').then(cache =>
-      cache.match(event.request).then(response => {
-        return (
-          response ||
-          fetch(event.request).then(networkResponse => {
-            cache.put(event.request, networkResponse.clone());
-            return networkResponse;
-          })
-        );
-      })
-    )
-  );
-});
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f5f5f5;
+      margin: 0;
+      padding: 1rem;
+    }
+
+    h2 {
+      text-align: center;
+      color: #d32f2f;
+    }
+
+    button {
+      display: block;
+      margin: 0 auto 1rem auto;
+      padding: 0.6rem 1rem;
+      border: none;
+      background: #d32f2f;
+      color: white;
+      border-radius: 5px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    #legend {
+      max-width: 700px;
+      margin: 0 auto 1rem auto;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .legend-item {
+      cursor: pointer;
+      padding: 6px 10px;
+      border-radius: 5px;
+      color: white;
+      font-size: 0.85rem;
+      user-select: none;
+      opacity: 1;
+      transition: opacity 0.2s;
+    }
+
+    .legend-item.disabled {
+      opacity: 0.4;
+    }
+
+    #events {
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .event {
+      background: white;
+      border-radius: 10px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    .title {
+      font-weight: bold;
+      margin-bottom: 0.3rem;
+    }
+
+    .meta {
+      font-size: 0.9rem;
+      margin-top: 0.3rem;
+    }
+
+    a {
+      color: #1565c0;
+    }
+  </style>
+</head>
+
+<body>
+  <h2>Damon Games Schedule</h2>
+
+  <button onclick="window.print()">Print</button>
+
+  <div id="legend"></div>
+  <div id="events">Loading...</div>
+
+  <script>
+    const API_URL = "https://d-games.veinoffeeling.workers.dev/games";
+
+    const sourceColors = {
+      team1: "#F6BF26",
+      team2: "#0026ff",
+      team3: "#878787",
+      default: "#616161"
+    };
+
+    let allEvents = [];
+    let activeSources = new Set();
+
+    async function loadEvents() {
+      try {
+        const res = await fetch(API_URL);
+        const data = await res.json();
+
+        allEvents = data;
+
+        // Collect all sources
+        const sources = [...new Set(allEvents.map(e => e.source || "default"))];
+
+        sources.forEach(s => activeSources.add(s));
+
+        renderLegend(sources);
+        renderEvents();
+      } catch (err) {
+        console.error(err);
+        document.getElementById("events").innerText = "Failed to load events.";
+      }
+    }
+
+    function renderLegend(sources) {
+      const legend = document.getElementById("legend");
+
+      legend.innerHTML = sources.map(source => {
+        const color = sourceColors[source] || sourceColors.default;
+
+        return `
+          <div class="legend-item" 
+               style="background:${color}"
+               onclick="toggleSource('${source}', this)">
+            ${source}
+          </div>
+        `;
+      }).join("");
+    }
+
+    function toggleSource(source, el) {
+      if (activeSources.has(source)) {
+        activeSources.delete(source);
+        el.classList.add("disabled");
+      } else {
+        activeSources.add(source);
+        el.classList.remove("disabled");
+      }
+
+      renderEvents();
+    }
+
+    function renderEvents() {
+      const container = document.getElementById("events");
+
+      const filtered = allEvents.filter(e =>
+        activeSources.has(e.source || "default")
+      );
+
+      if (!filtered.length) {
+        container.innerHTML = "No events to display.";
+        return;
+      }
+
+      const html = filtered.map(e => {
+        const title = e.title || "No Title";
+
+        const start = e.start
+          ? new Date(e.start).toLocaleString()
+          : "No date";
+
+        const color = sourceColors[e.source] || sourceColors.default;
+
+        const maps = e.location
+          ? `<div class="meta">
+              📍 <a href="https://www.google.com/maps?q=${encodeURIComponent(e.location)}" target="_blank">
+                ${e.location}
+              </a>
+            </div>`
+          : "";
+
+        return `
+          <div class="event" style="border-left: 6px solid ${color}">
+            <div class="title">${title}</div>
+            <div class="meta"><strong>${start}</strong></div>
+            ${maps}
+            <div class="meta" style="color:${color}">
+              Source: ${e.source || "default"}
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      container.innerHTML = html;
+    }
+
+    loadEvents();
+  </script>
+</body>
+</html>
