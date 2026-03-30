@@ -26,7 +26,26 @@ button {
   background: #d32f2f;
   color: white;
   border-radius: 5px;
-  font-size: 1rem;
+}
+
+#legend {
+  max-width: 700px;
+  margin: 0 auto 1rem auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.legend-item {
+  padding: 6px 10px;
+  border-radius: 5px;
+  color: white;
+  cursor: pointer;
+}
+
+.legend-item.disabled {
+  opacity: 0.4;
 }
 
 #events {
@@ -40,7 +59,6 @@ button {
   padding: 1rem;
   margin-bottom: 1rem;
   border-left: 6px solid;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
 
 .title {
@@ -59,6 +77,7 @@ button {
 <h2>Damon Games Schedule</h2>
 <button onclick="window.print()">Print</button>
 
+<div id="legend"></div>
 <div id="events">Loading...</div>
 
 <script>
@@ -70,33 +89,85 @@ const COLORS = {
   default: "#616161"
 };
 
+let allEvents = [];
+let activeSources = new Set();
+
+// ✅ FORCE EASTERN TIME (this fixes your UTC issue)
+function formatDate(dateStr) {
+  const d = new Date(dateStr);
+
+  const options = {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true
+  };
+
+  return new Intl.DateTimeFormat("en-US", options).format(d);
+}
+
+// ✅ MOBILE SAFE MAP LINK
+function mapsLink(location) {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`;
+}
+
 async function load() {
   const res = await fetch(API_URL);
-  const events = await res.json();
+  const data = await res.json();
 
-  render(events);
+  allEvents = data;
+
+  const sources = [...new Set(allEvents.map(e => e.source || "default"))];
+  sources.forEach(s => activeSources.add(s));
+
+  renderLegend(sources);
+  renderEvents();
 }
 
-function formatDate(dateStr) {
-  return new Date(dateStr).toLocaleString("en-US", {
-    timeZone: "America/New_York",
-    dateStyle: "medium",
-    timeStyle: "short"
-  });
+function renderLegend(sources) {
+  const legend = document.getElementById("legend");
+
+  legend.innerHTML = sources.map(source => {
+    const color = COLORS[source] || COLORS.default;
+
+    return `
+      <div class="legend-item"
+           style="background:${color}"
+           onclick="toggleSource('${source}', this)">
+        ${source}
+      </div>
+    `;
+  }).join("");
 }
 
-function mapsLink(location) {
-  const q = encodeURIComponent(location);
-  return `https://www.google.com/maps/search/?api=1&query=${q}`;
+function toggleSource(source, el) {
+  if (activeSources.has(source)) {
+    activeSources.delete(source);
+    el.classList.add("disabled");
+  } else {
+    activeSources.add(source);
+    el.classList.remove("disabled");
+  }
+
+  renderEvents();
 }
 
-function render(events) {
-  if (!events.length) {
-    document.getElementById("events").innerText = "No events found";
+function renderEvents() {
+  const container = document.getElementById("events");
+
+  const filtered = allEvents.filter(e =>
+    activeSources.has(e.source || "default")
+  );
+
+  if (!filtered.length) {
+    container.innerHTML = "No events to display";
     return;
   }
 
-  const html = events.map(e => {
+  const html = filtered.map(e => {
     const color = COLORS[e.source] || COLORS.default;
 
     return `
@@ -116,7 +187,7 @@ function render(events) {
     `;
   }).join("");
 
-  document.getElementById("events").innerHTML = html;
+  container.innerHTML = html;
 }
 
 load();
