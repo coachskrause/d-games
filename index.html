@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>2013 Novi FireCats Calendar</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 1rem;
+      max-width: 700px;
+      margin: auto;
+    }
+
+    .event-card {
+      background: #fff;
+      border: 1px solid #ccc;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      color: #d32f2f;
+    }
+
+    a {
+      color: #0000ee;
+      text-decoration: underline;
+    }
+
+    #download-btn {
+      margin-bottom: 1rem;
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      background: #d32f2f;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    #download-btn:hover {
+      background: #b71c1c;
+    }
+  </style>
+</head>
+<body>
+  <h2>2013 Novi FireCats Calendar</h2>
+
+  <button id="download-btn">Print</button>
+
+  <div id="events">Loading events...</div>
+
+  <script>
+    const WORKER_PROXY_URL = 'https://13-cal-worker.veinoffeeling.workers.dev';
+
+    async function fetchEvents() {
+      try {
+        const res = await fetch(WORKER_PROXY_URL);
+        const data = await res.json();
+        const events = data.items || []; // No filtering here, show all events
+        renderEvents(events);
+      } catch (err) {
+        document.getElementById('events').innerHTML = 'Failed to load events.';
+        console.error(err);
+      }
+    }
+
+    function renderEvents(events) {
+      if (!events.length) {
+        document.getElementById('events').innerHTML = 'No events found.';
+        return;
+      }
+
+      const html = events.map(e => {
+        const title = e.summary;
+        const location = e.location ? `<p>📍 <a href="https://www.google.com/maps/search/?q=${encodeURIComponent(e.location)}" target="_blank">${e.location}</a></p>` : '';
+        const start = new Date(e.start.dateTime || e.start.date).toLocaleString();
+        const end = new Date(e.end.dateTime || e.end.date).toLocaleString();
+
+        return `
+          <div class="event-card">
+            <h3>${title}</h3>
+            ${location}
+            <p><strong>Start:</strong> ${start}</p>
+            <p><strong>End:</strong> ${end}</p>
+            <p><a href="${e.htmlLink}" target="_blank">📅 Open in Google Calendar</a></p>
+          </div>`;
+      }).join('');
+
+      document.getElementById('events').innerHTML = html;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('download-btn').addEventListener('click', () => {
+        const printContents = document.getElementById('events').innerHTML;
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>2013 FireCats Games</title>
+              <style>
+                body {
+                  font-family: sans-serif;
+                  padding: 1rem;
+                  max-width: 700px;
+                  margin: auto;
+                }
+                .event-card {
+                  border: 1px solid #ccc;
+                  padding: 1rem;
+                  border-radius: 8px;
+                  margin-bottom: 1rem;
+                }
+                h2 {
+                  color: #d32f2f;
+                }
+                a {
+                  color: #0000ee;
+                  text-decoration: underline;
+                  word-break: break-word;
+                }
+              </style>
+            </head>
+            <body>
+              <h2>2013 Novi FireCats Calendar</h2>
+              ${printContents}
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+      });
+    });
+
+    fetchEvents();
+  </script>
+</body>
+</html>
