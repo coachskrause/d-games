@@ -118,6 +118,13 @@
             </div>`
           : "";
 
+        const links = e.url
+          ? `<div class="meta">
+              <a href="${e.url}" target="_blank" rel="noopener noreferrer">
+                Open Event
+              </a>
+            </div>`
+          : "";
 
         return `
           <div class="event">
