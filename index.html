@@ -4,9 +4,8 @@
   <meta charset="utf-8" />
   <title>Damon Games Calendar</title>
 
-  <!-- Correct FullCalendar bundle -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/fullcalendar@6.1.8/index.global.min.css">
+  <script src="https://unpkg.com/fullcalendar@6.1.8/index.global.min.js"></script>
 
   <style>
     body {
@@ -30,7 +29,7 @@
       const calendarEl = document.getElementById('calendar');
 
       const calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
+        initialView: 'listMonth',
 
         events: 'https://d-games.veinoffeeling.workers.dev/games',
 
