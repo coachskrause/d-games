@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>2013 Novi FireCats Calendar</title>
+  <title>D Games Calendar</title>
   <style>
     body {
       font-family: sans-serif;
@@ -47,14 +47,14 @@
   </style>
 </head>
 <body>
-  <h2>2013 Novi FireCats Calendar</h2>
+  <h2>Games Calendar</h2>
 
   <button id="download-btn">Print</button>
 
   <div id="events">Loading events...</div>
 
   <script>
-    const WORKER_PROXY_URL = 'https://13-cal-worker.veinoffeeling.workers.dev';
+    const WORKER_PROXY_URL = 'https://d-games.veinoffeeling.workers.dev';
 
     async function fetchEvents() {
       try {
@@ -100,7 +100,7 @@
         printWindow.document.write(`
           <html>
             <head>
-              <title>2013 FireCats Games</title>
+              <title>Games</title>
               <style>
                 body {
                   font-family: sans-serif;
@@ -125,7 +125,7 @@
               </style>
             </head>
             <body>
-              <h2>2013 Novi FireCats Calendar</h2>
+              <h2>Calendar</h2>
               ${printContents}
             </body>
           </html>
