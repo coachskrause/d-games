@@ -2,7 +2,9 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Damon Games Calendar</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <title>Damon Games</title>
 
   <link rel="stylesheet" href="https://unpkg.com/fullcalendar@6.1.8/index.global.min.css">
   <script src="https://unpkg.com/fullcalendar@6.1.8/index.global.min.js"></script>
@@ -10,38 +12,80 @@
   <style>
     body {
       font-family: sans-serif;
-      margin: 20px;
+      margin: 10px;
     }
 
     #calendar {
-      max-width: 900px;
-      margin: 0 auto;
+      max-width: 100%;
+    }
+
+    .event-card {
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .event-title {
+      font-weight: bold;
+      font-size: 16px;
+    }
+
+    .event-meta {
+      font-size: 13px;
+      color: #555;
+    }
+
+    .event-link {
+      display: block;
+      margin-top: 5px;
+      color: #8B0000;
+      text-decoration: none;
     }
   </style>
 </head>
 
 <body>
-  <h2>Damon Games</h2>
+  <h3>Damon Games</h3>
   <div id="calendar"></div>
 
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-      const calendarEl = document.getElementById('calendar');
+      const container = document.getElementById('calendar');
 
-      const calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'listMonth',
+      fetch('https://d-games.veinoffeeling.workers.dev/games')
+        .then(res => res.json())
+        .then(events => {
 
-        events: 'https://d-games.veinoffeeling.workers.dev/games',
-
-        eventClick: function(info) {
-          info.jsEvent.preventDefault();
-          if (info.event.url) {
-            window.open(info.event.url, '_blank');
+          if (!events.length) {
+            container.innerHTML = "<p>No events found</p>";
+            return;
           }
-        }
-      });
 
-      calendar.render();
+          container.innerHTML = "";
+
+          events
+            .filter(e => e.start) // Only valid events
+            .sort((a, b) => new Date(a.start) - new Date(b.start))
+            .forEach(event => {
+
+              const div = document.createElement('div');
+              div.className = 'event-card';
+
+              const date = new Date(event.start).toLocaleString();
+
+              div.innerHTML = `
+                <div class="event-title">${event.title}</div>
+                <div class="event-meta">${date}</div>
+                ${event.location ? `<div class="event-meta">${event.location}</div>` : ''}
+                ${event.description ? `<div class="event-meta">${event.description}</div>` : ''}
+
+                ${event.mapsUrl ? `<a class="event-link" href="${event.mapsUrl}" target="_blank">View on Map</a>` : ''}
+
+                ${event.url ? `<a class="event-link" href="${event.url}" target="_blank">Event Details</a>` : ''}
+              `;
+
+              container.appendChild(div);
+            });
+        });
     });
   </script>
 </body>
