@@ -1,92 +1,178 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Damon Games</title>
-
-  <link rel="stylesheet" href="https://unpkg.com/fullcalendar@6.1.8/index.global.min.css">
-  <script src="https://unpkg.com/fullcalendar@6.1.8/index.global.min.js"></script>
 
   <style>
     body {
       font-family: sans-serif;
-      margin: 10px;
+      padding: 1rem;
+      max-width: 700px;
+      margin: auto;
+      background: #f5f5f5;
     }
 
-    #calendar {
-      max-width: 100%;
+    h2 {
+      color: #d32f2f;
+      text-align: center;
     }
 
     .event-card {
-      padding: 10px;
-      border-bottom: 1px solid #ddd;
+      background: #fff;
+      border: 1px solid #ddd;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
     }
 
     .event-title {
+      font-size: 1.1rem;
       font-weight: bold;
-      font-size: 16px;
+      margin-bottom: 0.5rem;
     }
 
     .event-meta {
-      font-size: 13px;
-      color: #555;
+      margin: 0.25rem 0;
+      color: #333;
     }
 
-    .event-link {
+    a {
+      color: #1565c0;
+      text-decoration: underline;
+      word-break: break-word;
+    }
+
+    #download-btn {
       display: block;
-      margin-top: 5px;
-      color: #8B0000;
-      text-decoration: none;
+      margin: 1rem auto;
+      padding: 0.6rem 1rem;
+      font-size: 1rem;
+      background: #d32f2f;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    #download-btn:hover {
+      background: #b71c1c;
     }
   </style>
 </head>
 
 <body>
-  <h3>Damon Games</h3>
-  <div id="calendar"></div>
+  <h2>Damon Games</h2>
+
+  <button id="download-btn">Print</button>
+
+  <div id="events">Loading events...</div>
 
   <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      const container = document.getElementById('calendar');
+    const WORKER_URL = 'https://d-games.veinoffeeling.workers.dev/games';
 
-      fetch('https://d-games.veinoffeeling.workers.dev/games')
-        .then(res => res.json())
-        .then(events => {
+    async function fetchEvents() {
+      try {
+        const res = await fetch(WORKER_URL);
+        const data = await res.json();
 
-          if (!events.length) {
-            container.innerHTML = "<p>No events found</p>";
-            return;
-          }
+        renderEvents(data);
+      } catch (err) {
+        console.error(err);
+        document.getElementById('events').innerHTML = 'Failed to load events.';
+      }
+    }
 
-          container.innerHTML = "";
+    function renderEvents(events) {
+      const container = document.getElementById('events');
 
-          events
-            .filter(e => e.start) // Only valid events
-            .sort((a, b) => new Date(a.start) - new Date(b.start))
-            .forEach(event => {
+      if (!events || !events.length) {
+        container.innerHTML = 'No events found.';
+        return;
+      }
 
-              const div = document.createElement('div');
-              div.className = 'event-card';
+      // Filter out invalid events (important)
+      const validEvents = events
+        .filter(e => e.start)
+        .sort((a, b) => new Date(a.start) - new Date(b.start));
 
-              const date = new Date(event.start).toLocaleString();
+      const html = validEvents.map(e => {
+        const start = new Date(e.start).toLocaleString();
 
-              div.innerHTML = `
-                <div class="event-title">${event.title}</div>
-                <div class="event-meta">${date}</div>
-                ${event.location ? `<div class="event-meta">${event.location}</div>` : ''}
-                ${event.description ? `<div class="event-meta">${event.description}</div>` : ''}
+        const location = e.location
+          ? `<div class="event-meta">
+              📍 <a href="https://www.google.com/maps/search/?q=${encodeURIComponent(e.location)}" target="_blank">
+                ${e.location}
+              </a>
+            </div>`
+          : '';
 
-                ${event.mapsUrl ? `<a class="event-link" href="${event.mapsUrl}" target="_blank">View on Map</a>` : ''}
+        const description = e.description
+          ? `<div class="event-meta">${e.description}</div>`
+          : '';
 
-                ${event.url ? `<a class="event-link" href="${event.url}" target="_blank">Event Details</a>` : ''}
-              `;
+        const links = `
+          ${e.url ? `<div><a href="${e.url}" target="_blank">View Event</a></div>` : ''}
+          ${e.mapsUrl ? `<div><a href="${e.mapsUrl}" target="_blank">Open in Maps</a></div>` : ''}
+        `;
 
-              container.appendChild(div);
-            });
-        });
+        return `
+          <div class="event-card">
+            <div class="event-title">${e.title}</div>
+            <div class="event-meta"><strong>${start}</strong></div>
+            ${location}
+            ${description}
+            ${links}
+          </div>
+        `;
+      }).join('');
+
+      container.innerHTML = html;
+    }
+
+    // Print button
+    document.getElementById('download-btn').addEventListener('click', () => {
+      const printContents = document.getElementById('events').innerHTML;
+
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Damon Games</title>
+            <style>
+              body {
+                font-family: sans-serif;
+                padding: 1rem;
+                max-width: 700px;
+                margin: auto;
+              }
+              .event-card {
+                border: 1px solid #ccc;
+                padding: 1rem;
+                border-radius: 8px;
+                margin-bottom: 1rem;
+              }
+              a {
+                color: #0000ee;
+                word-break: break-word;
+              }
+            </style>
+          </head>
+          <body>
+            <h2>Damon Games</h2>
+            ${printContents}
+          </body>
+        </html>
+      `);
+
+      printWindow.document.close();
+      printWindow.focus();
+      printWindow.print();
     });
+
+    fetchEvents();
   </script>
 </body>
 </html>
