@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Damon Games Schedule</title>
 
   <style>
@@ -26,8 +26,6 @@
       background: #d32f2f;
       color: white;
       border-radius: 5px;
-      font-size: 1rem;
-      cursor: pointer;
     }
 
     #legend {
@@ -45,9 +43,6 @@
       border-radius: 5px;
       color: white;
       font-size: 0.85rem;
-      user-select: none;
-      opacity: 1;
-      transition: opacity 0.2s;
     }
 
     .legend-item.disabled {
@@ -65,28 +60,22 @@
       padding: 1rem;
       margin-bottom: 1rem;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      border-left: 6px solid transparent;      
+      border-left: 6px solid transparent;
     }
 
     .title {
       font-weight: bold;
-      margin-bottom: 0.3rem;
     }
 
     .meta {
       font-size: 0.9rem;
       margin-top: 0.3rem;
     }
-
-    a {
-      color: #1565c0;
-    }
   </style>
 </head>
 
 <body>
   <h2>Damon Games Schedule</h2>
-
   <button onclick="window.print()">Print</button>
 
   <div id="legend"></div>
@@ -98,30 +87,56 @@
     const sourceColors = {
       team1: "#F6BF26",
       team2: "#0026ff",
-      team3: "#878787",
       default: "#616161"
     };
 
     let allEvents = [];
     let activeSources = new Set();
 
-    async function loadEvents() {
-      try {
-        const res = await fetch(API_URL);
-        const data = await res.json();
+    function formatDateTime(start, end) {
+      if (!start) return "No date";
 
-        allEvents = data;
+      const s = new Date(start);
+      const e = end ? new Date(end) : null;
 
-        // Collect all sources
-        const sources = [...new Set(allEvents.map(e => e.source || "default"))];
-        sources.forEach(s => activeSources.add(s));
+      const isAllDay =
+        s.getUTCHours() === 0 &&
+        s.getUTCMinutes() === 0 &&
+        (!e || e.getUTCHours() === 0);
 
-        renderLegend(sources);
-        renderEvents();
-      } catch (err) {
-        console.error(err);
-        document.getElementById("events").innerText = "Failed to load events.";
+      if (isAllDay) {
+        return s.toLocaleDateString(undefined, {
+          weekday: "short",
+          month: "short",
+          day: "numeric"
+        });
       }
+
+      const date = s.toLocaleDateString(undefined, {
+        weekday: "short",
+        month: "short",
+        day: "numeric"
+      });
+
+      const time = s.toLocaleTimeString(undefined, {
+        hour: "numeric",
+        minute: "2-digit"
+      });
+
+      return `${date} at ${time}`;
+    }
+
+    async function loadEvents() {
+      const res = await fetch(API_URL);
+      const data = await res.json();
+
+      allEvents = data;
+
+      const sources = [...new Set(allEvents.map(e => e.source || "default"))];
+      sources.forEach(s => activeSources.add(s));
+
+      renderLegend(sources);
+      renderEvents();
     }
 
     function renderLegend(sources) {
@@ -131,7 +146,7 @@
         const color = sourceColors[source] || sourceColors.default;
 
         return `
-          <div class="legend-item" 
+          <div class="legend-item"
                style="background:${color}"
                onclick="toggleSource('${source}', this)">
             ${source}
@@ -148,7 +163,6 @@
         activeSources.add(source);
         el.classList.remove("disabled");
       }
-
       renderEvents();
     }
 
@@ -159,38 +173,19 @@
         activeSources.has(e.source || "default")
       );
 
-      if (!filtered.length) {
-        container.innerHTML = "No events to display.";
-        return;
-      }
-
       const html = filtered.map(e => {
-        const title = e.title || "No Title";
-
-        const start = e.start
-          ? new Date(e.start).toLocaleString()
-          : "No date";
-
         const color = sourceColors[e.source] || sourceColors.default;
 
-        const maps = e.location
-          ? `<div class="meta">
-              📍 <a href="https://www.google.com/maps?q=${encodeURIComponent(e.location)}" target="_blank">
-                ${e.location}
-              </a>
-            </div>`
-          : "";
-
         return `
-          <div class="event" style="border-left-color: ${color}">
-            <div class="title">${title}</div>
-            <div class="meta"><strong>${start}</strong></div>
-            ${maps}
+          <div class="event" style="border-left-color:${color}">
+            <div class="title">${e.title}</div>
+            <div class="meta"><strong>${formatDateTime(e.start, e.end)}</strong></div>
+            ${e.location ? `<div class="meta">📍 <a href="https://www.google.com/maps?q=${encodeURIComponent(e.location)}" target="_blank">${e.location}</a></div>` : ""}
           </div>
         `;
       }).join("");
 
-      container.innerHTML = html;
+      container.innerHTML = html || "No events";
     }
 
     loadEvents();
