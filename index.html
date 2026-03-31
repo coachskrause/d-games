@@ -38,10 +38,19 @@ button {
 }
 
 .legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   padding: 6px 10px;
   border-radius: 5px;
   color: white;
   cursor: pointer;
+}
+
+.legend-item img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
 }
 
 .legend-item.disabled {
@@ -83,14 +92,31 @@ button {
 <script>
 const API_URL = "https://d-games.veinoffeeling.workers.dev";
 
+// 🎯 DISPLAY NAMES
+const SOURCE_NAMES = {
+  team1: "Eagles",
+  team2: "Knights-Red",
+  default: "Other"
+};
+
+// 🎯 COLORS
 const COLORS = {
   team1: "#F6BF26",
-  team2: "#0026ff",
+  team2: "#006cb8",
   default: "#616161"
+};
+
+// 🖼️ LOGOS (REPLACE THESE)
+const LOGOS = {
+  team1: "https://raw.githubusercontent.com/coachskrause/d-games/refs/heads/main/eagles-50.png",
+  team2: "https://raw.githubusercontent.com/coachskrause/d-games/refs/heads/main/lha-knights-50.png"
 };
 
 let allEvents = [];
 let activeSources = new Set();
+
+// ✅ FORCE ORDER (team1 first)
+const SOURCE_ORDER = ["team1", "team2"];
 
 function formatDate(dateStr) {
   const d = new Date(dateStr);
@@ -116,9 +142,13 @@ async function load() {
   allEvents = data;
 
   const sources = [...new Set(allEvents.map(e => e.source || "default"))];
-  sources.forEach(s => activeSources.add(s));
 
-  renderLegend(sources);
+  // apply custom order
+  const orderedSources = SOURCE_ORDER.filter(s => sources.includes(s));
+
+  orderedSources.forEach(s => activeSources.add(s));
+
+  renderLegend(orderedSources);
   renderEvents();
 }
 
@@ -127,12 +157,15 @@ function renderLegend(sources) {
 
   legend.innerHTML = sources.map(source => {
     const color = COLORS[source] || COLORS.default;
+    const name = SOURCE_NAMES[source] || source;
+    const logo = LOGOS[source];
 
     return `
       <div class="legend-item"
            style="background:${color}"
            onclick="toggleSource('${source}', this)">
-        ${source}
+        ${logo ? `<img src="${logo}" alt="">` : ""}
+        ${name}
       </div>
     `;
   }).join("");
