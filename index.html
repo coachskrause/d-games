@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Damon Games Schedule</title>
+<title>Robert Games Schedule</title>
 
 <style>
 body {
@@ -117,7 +117,7 @@ button {
 
 <body>
 
-<h2>Damon Games Schedule</h2>
+<h2>Robert Games Schedule</h2>
 
 <button onclick="refreshData()">Refresh</button>
 
@@ -126,24 +126,28 @@ button {
 <div id="events"></div>
 
 <script>
-const API_URL = "https://d-games.veinoffeeling.workers.dev";
+const API_URL = "https://r-games.veinoffeeling.workers.dev";
 
+// STORAGE KEYS
 const STORAGE_KEY = "games_cache";
 const STORAGE_TS = "games_cache_ts";
 
+// DISPLAY NAMES
 const SOURCE_NAMES = {
-  team1: "Eagles",
-  team2: "Knights-Red"
+  team1: "Huron Valley JV",
+  team2: "Walled Lake JV"
 };
 
+// COLORS
 const COLORS = {
-  team1: "#F6BF26",
-  team2: "#006cb8"
+  team1: "#000000",
+  team2: "#969696"
 };
 
+// LOGOS
 const LOGOS = {
-  team1: "https://raw.githubusercontent.com/coachskrause/d-games/refs/heads/main/eagles-50.png",
-  team2: "https://raw.githubusercontent.com/coachskrause/d-games/refs/heads/main/lha-knights-50.png"
+  team1: "https://raw.githubusercontent.com/coachskrause/r-games/refs/heads/main/HV-50.png",
+  team2: "https://raw.githubusercontent.com/coachskrause/r-games/refs/heads/main/WLN-50.png"
 };
 
 const SOURCE_ORDER = ["team1", "team2"];
