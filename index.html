@@ -77,6 +77,11 @@ button {
   border-left: 6px solid;
 }
 
+/* DASHED BORDER FOR TBD */
+.event.tbd {
+  border-left-style: dashed !important;
+}
+
 .title-row {
   display: flex;
   align-items: center;
@@ -151,7 +156,10 @@ function formatDate(dateStr) {
 
   const d = new Date(dateStr);
 
-  if (dateStr.endsWith("T00:00:00")) {
+  // TRUE all-day detection
+  const isAllDay = !dateStr.includes("T");
+
+  if (isAllDay) {
     return d.toLocaleDateString() + " (TBD)";
   }
 
@@ -162,7 +170,7 @@ function mapsLink(location) {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`;
 }
 
-// ---------- INSTANT CACHE LOAD ----------
+// ---------- INSTANT CACHE ----------
 function loadCacheImmediate() {
   try {
     const cached = localStorage.getItem(STORAGE_KEY);
@@ -174,6 +182,7 @@ function loadCacheImmediate() {
     if (!events || !events.length) return false;
 
     allEvents = events;
+
     updateLastUpdated(ts, true);
 
     setupSources();
@@ -262,7 +271,7 @@ function toggleSource(source, el) {
   renderEvents();
 }
 
-// ---------- UPDATED EVENT RENDER ----------
+// ---------- EVENTS ----------
 function renderEvents() {
   const container = document.getElementById("events");
 
@@ -273,10 +282,11 @@ function renderEvents() {
   if (!filtered.length) return;
 
   container.innerHTML = filtered.map(e => {
-    const isTBD = !e.start || e.start.endsWith("T00:00:00");
+    const isTBD = !e.start || !e.start.includes("T");
 
     return `
-      <div class="event" style="border-left-color:${COLORS[e.source]}">
+      <div class="event ${isTBD ? 'tbd' : ''}" style="border-left-color:${COLORS[e.source]}">
+
         <div class="title-row">
           <img src="${LOGOS[e.source]}">
           <div class="title">${e.title}</div>
@@ -295,6 +305,7 @@ function renderEvents() {
              </div>`
           : ""
         }
+
       </div>
     `;
   }).join("");
@@ -307,7 +318,7 @@ if (!hasCache) {
   document.getElementById("events").innerText = "Loading...";
 }
 
-load(); // background refresh
+load();
 </script>
 
 </body>
