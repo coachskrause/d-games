@@ -26,6 +26,10 @@ h2 {
   color: #444;
 }
 
+summary.section-title {
+  cursor: pointer;
+}
+
 button {
   display: block;
   margin: 0 auto 0.5rem auto;
@@ -133,10 +137,10 @@ button {
 
 <div id="events"></div>
 
-<div id="pastContainer" style="display:none;">
-  <div class="section-title">Past Games</div>
+<details id="pastContainer" style="display:none;">
+  <summary class="section-title">Past Games</summary>
   <div id="pastEvents"></div>
-</div>
+</details>
 
 <script>
 const API_URL = "https://d-games.veinoffeeling.workers.dev";
@@ -146,17 +150,17 @@ const STORAGE_TS = "games_cache_ts";
 
 const SOURCE_NAMES = {
   team1: "Eagles",
-  team2: "Knights-Red"
+  //team2: "Knights-Red"
 };
 
 const COLORS = {
   team1: "#F6BF26",
-  team2: "#006cb8"
+  //team2: "#006cb8"
 };
 
 const LOGOS = {
   team1: "https://raw.githubusercontent.com/coachskrause/d-games/refs/heads/main/eagles-50.png",
-  team2: "https://raw.githubusercontent.com/coachskrause/d-games/refs/heads/main/lha-knights-50.png"
+  //team2: "https://raw.githubusercontent.com/coachskrause/d-games/refs/heads/main/lha-knights-50.png"
 };
 
 const SOURCE_ORDER = ["team1", "team2"];
@@ -343,6 +347,8 @@ function renderEvents() {
   if (past.length) {
     document.getElementById("pastContainer").style.display = "block";
     document.getElementById("pastEvents").innerHTML = renderList(past);
+  } else {
+    document.getElementById("pastContainer").style.display = "none";
   }
 }
 
