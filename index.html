@@ -130,7 +130,7 @@ button {
 
 <h2>Damon Games Schedule</h2>
 
-<button onclick="refreshData()">Refresh</button>
+<button id="refreshButton" onclick="refreshData()">Refresh</button>
 
 <div id="lastUpdated"></div>
 <div id="legend"></div>
@@ -144,9 +144,7 @@ button {
 
 <script>
 const API_URL = "https://d-games.veinoffeeling.workers.dev";
-
-const STORAGE_KEY = "games_cache";
-const STORAGE_TS = "games_cache_ts";
+const refreshButton = document.getElementById("refreshButton");
 
 const SOURCE_NAMES = {
   team1: "Eagles",
@@ -190,29 +188,6 @@ function mapsLink(location) {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`;
 }
 
-// ---------- CACHE ----------
-function loadCacheImmediate() {
-  try {
-    const cached = localStorage.getItem(STORAGE_KEY);
-    const ts = localStorage.getItem(STORAGE_TS);
-
-    if (!cached) return false;
-
-    const events = JSON.parse(cached);
-    if (!events || !events.length) return false;
-
-    allEvents = events;
-
-    updateLastUpdated(ts, true);
-    setupSources();
-    renderEvents();
-
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 // ---------- FETCH ----------
 async function load(force = false) {
   try {
@@ -223,14 +198,6 @@ async function load(force = false) {
 
     const newEvents = data.events || [];
     if (!newEvents.length) return;
-
-    const old = localStorage.getItem(STORAGE_KEY);
-    const newStr = JSON.stringify(newEvents);
-
-    if (old === newStr) return;
-
-    localStorage.setItem(STORAGE_KEY, newStr);
-    localStorage.setItem(STORAGE_TS, data.lastUpdated);
 
     allEvents = newEvents;
 
@@ -254,7 +221,11 @@ function updateLastUpdated(ts, cached = false) {
 
 function refreshData() {
   document.getElementById("lastUpdated").innerText = "Refreshing...";
-  load(true);
+  refreshButton.disabled = true;
+
+  load(true).finally(() => {
+    refreshButton.disabled = false;
+  });
 }
 
 // ---------- SOURCES ----------
@@ -353,13 +324,11 @@ function renderEvents() {
 }
 
 // ---------- INIT ----------
-const hasCache = loadCacheImmediate();
-
-if (!hasCache) {
-  document.getElementById("events").innerText = "Loading...";
-}
-
+document.getElementById("events").innerText = "Loading...";
 load();
+
+// Check every 5 minutes for updated server cache.
+setInterval(load, 300000);
 </script>
 
 </body>
